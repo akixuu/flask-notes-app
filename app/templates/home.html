@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Notes Flask App with Authentication</h1>
+
+{% if notes %}
+<div class="row row-cols-2">
+    {% for note in notes %}
+    <div class="col card">
+        <img class="card-img-top placeholder" src="" alt="Title">
+        <div class="card-body">
+            <h4 class="card-title">{{note.title}}</h4>
+            <p class="card-text">{{note.content}}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% endblock content %}
