@@ -1,2 +1,5 @@
 Pipfile
 .gitignore
+Pipfile.lock
+requirements.txt
+.env
