@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from app.users.forms import *
 from app.models import User
-from app import bcrypt, db, mail, app
+from app import bcrypt, db, mail
 from flask_login import current_user, login_user, logout_user
 from flask_mail import Message
 
@@ -52,14 +52,17 @@ def recovery_request():
     form = RecoverPasswordForm()
     if form.validate_on_submit():
         flash(f'If this email is associated with an account, we will send an recovery email shortly.', 'info')
+        
+        
         user = User.query.filter_by(email=form.email.data).first()
+        
         if user:
             token = User.get_recovery_token(user)
             msg = Message(
                 subject='Password Recovery Link', 
-                sender=app.config['MAIL_USERNAME'], 
+                sender=current_app.config['MAIL_USERNAME'], 
                 recipients=[form.email.data], 
-                body=f'''Here is your password recovery link: {url_for('users.recovery', token=token, _external=True)} \n\nIf you did not request to reset your password, ignore this message.''')
+                body=f'''Here is your password recovery link: {url_for('users.recovery', token=token, _external=True)}\n\n If you did not make this request then simply ignore this email and no changes will be made.''')
             mail.send(msg)
             return redirect(url_for('users.login'))
     return render_template('auth/recovery.html', title='Reset Password', form=form)
@@ -67,25 +70,23 @@ def recovery_request():
 
 @users.route('/recovery/<token>', methods=['GET', 'POST'])
 def recovery(token):
-    user_id = User.validate_recovery_token(token)
-    if user_id is None:
-        flash(f'The token is invalid or has expired. Please try again.')
-        return redirect(url_for('users.recovery_request')) 
+    if current_user.is_authenticated:
+        return redirect(url_for('notes.view_notes'))
     
-    user = User.query.get(user_id)
+    user = User.validate_recovery_token(token)
     if user is None:
-        flash(f'The user for this password recovery no longer exists.')
-        return redirect(url_for('users.login'))
-
+        flash(f'That is an invalid or expired token', 'warning')
+        return redirect(url_for('users.recovery_request'))
+    
     form = ResetPasswordForm()
     if form.validate_on_submit():
-        hashed = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        user.password = hashed
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        user.password = hashed_password
         db.session.commit()
 
-        flash(f'Your password has been updated!')
+        flash(f'Password updated, please login!', 'success')
         return redirect(url_for('users.login'))
-    return render_template('auth/reset_password.html', title='Recovery', form=form)
+    return render_template('auth/reset_password.html', title='Reset Password', form=form)
 
 @users.route('/settings')
 def settings():

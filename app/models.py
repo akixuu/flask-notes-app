@@ -1,8 +1,8 @@
-from app import db, login_manager, app
-from itsdangerous import TimedSerializer
+from app import db, login_manager
+from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime
 from flask_login import UserMixin
-from itsdangerous import TimedSerializer
+from flask import current_app
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -14,21 +14,17 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(50), nullable=False)
 
     def get_recovery_token(self):
-        s = TimedSerializer(app.config['SECRET_KEY'])
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
         return s.dumps(self.id)
     
     @staticmethod
     def validate_recovery_token(token):
-        s = TimedSerializer(app.config['SECRET_KEY'])
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
         try:
-            id = TimedSerializer.load(token, max_age=1800)
+            user_id = s.loads(token, max_age=1800)
         except:
             return
-        
-        return User.query.get(id)
-        
-
-
+        return User.query.get(user_id)
 
     def __repr__(self):
         return f'User(id={self.id}, email:{self.email})'
