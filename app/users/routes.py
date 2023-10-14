@@ -31,7 +31,7 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data): # password check
             login_user(user=user, remember=form.remember.data) # login
-            flash(f'Logged in with email {form.email.data}.', category='sucess')
+            flash(f'Logged in with email {form.email.data}.', category='info')
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('notes.view_notes'))
         else: 

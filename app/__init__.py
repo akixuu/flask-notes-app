@@ -8,6 +8,8 @@ app.config['SECRET_KEY'] = '6d7d8936e9cfb34a7619c92021c95f55'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///notesapp.db'
 
 login_manager = LoginManager(app)
+login_manager.login_view = 'users.login'
+login_manager.login_message_category = 'info'
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
